@@ -5,3 +5,8 @@
 src/*.o
 src/*.so
 src/*.dll
+*.tar.gz
+*.tgz
+*.Rcheck
+.DS_Store
+

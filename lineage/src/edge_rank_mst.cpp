@@ -44,9 +44,6 @@ List edge_mst_hclust_impl(IntegerVector from, IntegerVector to, NumericVector we
 
 
 /*** R
-library(tidyverse)
-library(tidygraph)
-library(ggraph)
 
 node_mst_hierarchy <- function(weights = NULL) {
 	if (!.graph_context$free() && .graph_context$active() != "nodes") {
@@ -56,8 +53,6 @@ node_mst_hierarchy <- function(weights = NULL) {
 	edge_mst_hclust_impl(.E()$from, .E()$to, as.numeric(weights), graph_order()) |>
 		as_tibble(.name_repair=~c("rank","parent","edge_idx"))
 }
-
-
 
 # Create a complete graph with random weights
 set.seed(1234)
