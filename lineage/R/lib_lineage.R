@@ -78,13 +78,8 @@ lineage_graph_build <- function(pseudotime,identity_scores) {
 lineage_graph_prune <- function(g) {
 	g <- g %>%
 		activate(edges) %>%
-		filter(.N()$med_pseudotime[from] < .N()$med_pseudotime[to]) %>%
 		filter(target_cells.source_id.slope < target_cells.target_id.slope) %>%
-		arrange(
-			#sign(target_cells.source_id.slope),
-			#-sign(target_cells.target_id.slope),
-			desc(target_cells.branching.pseudotime)
-		) %>%
+		arrange(desc(target_cells.branching.pseudotime)) %>%
 		group_by(to) %>%
 		slice_head(n=1) %>%
 		activate(nodes)
