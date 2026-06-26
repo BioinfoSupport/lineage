@@ -1,0 +1,17 @@
+Package: lineage
+Type: Package
+Title: Lineage tree inference from single cell transcriptomic
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Julien", "Prados",
+      email = "julien.prados@unige.ch",
+      role = c("aut", "cre")
+    )
+  )
+Description: Infer lineage tree from single cell transcriptomic and provide
+    multiple tools to work with lineage trees.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
