@@ -16,7 +16,7 @@ library(ggraph)
 get_cells <- function(pseudotime,identity_scores) {
 	stopifnot("pseudotime and identity_scores should both be specified or not" = is.null(pseudotime) == is.null(identity_scores))
 	if (is.null(pseudotime)) return(NULL)
-	pseudotime <- rlang::as_double(pseudotime)
+	pseudotime <- as.numeric(pseudotime)
 	identity_scores <- as.matrix(identity_scores)
 	stopifnot("Dimensions of pseudotime and identity scores don't match" = nrow(identity_scores)==length(pseudotime))
 	cells <- tibble(pseudotime,identity_scores) |>
@@ -79,9 +79,10 @@ lineage_graph_prune <- function(g) {
 	g <- g %>%
 		activate(edges) %>%
 		filter(.N()$med_pseudotime[from] < .N()$med_pseudotime[to]) %>%
+		filter(target_cells.source_id.slope < target_cells.target_id.slope) %>%
 		arrange(
-			sign(target_cells.source_id.slope),
-			-sign(target_cells.target_id.slope),
+			#sign(target_cells.source_id.slope),
+			#-sign(target_cells.target_id.slope),
 			desc(target_cells.branching.pseudotime)
 		) %>%
 		group_by(to) %>%
