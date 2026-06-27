@@ -147,8 +147,28 @@ plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL
 plot_lineage_graph <- function(g) {
 	g |>
 		ggraph() +
-		geom_edge_link(arrow = grid::arrow(angle=10,type="closed")) +
-		geom_node_label(aes(label=identity_label))
+			geom_edge_link(aes(filter=target_cells.source_id.slope >= target_cells.target_id.slope),arrow = grid::arrow(angle=10,type="closed"),color="grey") +
+			geom_edge_link(aes(filter=target_cells.source_id.slope < target_cells.target_id.slope),arrow = grid::arrow(angle=10,type="closed"),color="black") +
+			geom_node_label(aes(label=str_c(identity,"-",identity_label)))
+}
+
+
+#' Compute ancestor matrix
+#'
+#' @param g a graph
+#' @return a sparse logical matrix where each row list all ancestors of a node
+#' @export
+ancestor_matrix <- function(g,mode="out") {
+	A <- g %>%
+		activate(nodes) %>%
+		select() %>%
+		mutate(
+			childs = local_members(mode = mode,mindist = 0, order = +Inf)
+		) %>%
+		as_tibble("nodes") %>%
+		mutate(node = seq_along(childs)) %>%
+		unnest_longer(childs)
+	Matrix::sparseMatrix(A$childs,A$node)
 }
 
 
