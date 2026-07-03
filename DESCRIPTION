@@ -1,6 +1,6 @@
 Package: lineage
 Type: Package
-Title: Lineage tree inference from single cell transcriptomic
+Title: Lineage graph inference from single cell transcriptomic
 Version: 0.1.0
 Authors@R: c(
     person(
