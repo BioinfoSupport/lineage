@@ -32,5 +32,4 @@ nearest neighbors.
   m <- matrix(runif(1000*100),ncol=1000)
   w <- landscape_weights_2d(x,y,k=50,sd=0.05)
   M <- m |> tcrossprod(w$fwd) |> tcrossprod(w$rev)
-  tibble(x,y,z=M[1,]) |> ggplot(aes(x=x,y=y,color=z)) + geom_point(size=3) + coord_equal()
 }

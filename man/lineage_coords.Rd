@@ -9,6 +9,8 @@ lineage_coords(g, pseudotime, identity_scores)
 \arguments{
 \item{g}{a graph}
 
+\item{pseudotime}{a numeric vector giving pseudotime of each cell}
+
 \item{identity_scores}{a numeric matrix of cell identity scores with number of
 row matching length(pseudotime). Each row give identity scores of the cell
 in each cluster.}

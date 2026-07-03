@@ -1,4 +1,5 @@
 
+
 #' Compute weight matrices to smooth gene expression signal along a pseudotime
 #'
 #' Weights are generated using a gaussian kernel.
@@ -11,6 +12,7 @@
 #'         with: m |> tcrossprod(w$fwd). The smoothed (gene x cells) expression matrix can be obtained
 #'         with: m |> tcrossprod(w$fwd) |> tcrossprod(w$rev)
 #' @export
+#' @importFrom stats dnorm
 #' @examples
 #' t <- runif(100)
 #' m <- matrix(runif(1000*100),ncol=100)
@@ -34,7 +36,7 @@ waves_weights_1d <- function(t,at=seq(min(t),max(t),length.out=30),sd=1) {
 #' @param filter a boolean, when TRUE remove grid point that are not the direct
 #'               nearest neighbor of a given point
 #' @export
-#' @import FNN
+#' @importFrom FNN get.knnx
 grid_2d <- function(x,y,nx=30,ny=30,filter=TRUE) {
 	grid <- expand_grid(
 		x = seq(min(x),max(x),length.out=nx),
@@ -63,14 +65,13 @@ grid_2d <- function(x,y,nx=30,ny=30,filter=TRUE) {
 #'         with: m |> tcrossprod(w$fwd). The smoothed (gene x cells) expression matrix can be obtained
 #'         with: m |> tcrossprod(w$fwd) |> tcrossprod(w$rev)
 #' @export
-#' @import Matrix
-#' @import FNN
+#' @importFrom Matrix sparseMatrix t colSums rowSums
+#' @importFrom FNN get.knnx
 #' @examples
 #'   x <- runif(1000); y <- runif(1000)
 #'   m <- matrix(runif(1000*100),ncol=1000)
 #'   w <- landscape_weights_2d(x,y,k=50,sd=0.05)
 #'   M <- m |> tcrossprod(w$fwd) |> tcrossprod(w$rev)
-#'   tibble(x,y,z=M[1,]) |> ggplot(aes(x=x,y=y,color=z)) + geom_point(size=3) + coord_equal()
 landscape_weights_2d <- function(x,y,grid=grid_2d(x,y),k=5,sd=1) {
 	# Look for k closest grid points of each cell
 	knn <- FNN::get.knnx(as.matrix(grid),cbind(x,y),k=k)

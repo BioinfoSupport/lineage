@@ -33,6 +33,11 @@ plot_lineage_incidence_matrix(g)
 g <- lineage_graph_prune(g)
 plot_lineage_graph(g)
 lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + geom_jitter(aes(x=pseudotime,y=lineage_label,color=identity_label))
-lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + ggridges::geom_density_ridges(aes(x=pseudotime,y=lineage_label,fill=identity_label),alpha=0.5)
+
+if (requireNamespace("ggridges", quietly = TRUE)) {
+	lineage_coords(g,pseudotime,identity_scores) %>% 
+		ggplot() + 
+		ggridges::geom_density_ridges(aes(x=pseudotime,y=lineage_label,fill=identity_label),alpha=0.5)
+}
 ```
 

@@ -13,7 +13,9 @@ Description: Infer lineage tree from single cell transcriptomic and provide
     multiple tools to work with lineage trees.
 Suggests:
     knitr,
-    rmarkdown    
+    rmarkdown,
+    ggridges,
+    tidyverse
 VignetteBuilder: knitr
 License: GPL-3
 Encoding: UTF-8

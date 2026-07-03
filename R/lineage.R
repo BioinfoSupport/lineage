@@ -3,10 +3,11 @@
 #' @importFrom tibble tibble
 #' @importFrom dplyr mutate filter pull select left_join ungroup slice_max group_by
 #' @importFrom tidyr expand_grid
-#' @importFrom tidygraph tbl_graph activate .N select left_join ungroup slice_max group_by local_members
+#' @importFrom tidygraph tbl_graph activate .N select left_join ungroup slice_max group_by local_members as_tbl_graph as_tibble
 #' @importFrom magrittr %>%
-#' @importFrom purrr map2_dbl
+#' @importFrom purrr map2_dbl map
 #' @importFrom stringr str_c
+#' @importFrom ggplot2 ggplot aes geom_point facet_grid geom_abline xlab ylab labs ggtitle theme theme_bw scale_x_continuous
 NULL
 
 
@@ -52,6 +53,7 @@ get_cells <- function(pseudotime,identity_scores) {
 #'		in each cluster.
 #' @return a fully connected tbl_graph
 #' @export
+#' @importFrom stats lsfit median coef
 lineage_graph_build <- function(pseudotime,identity_scores) {
 	#pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000)
 	cells <- get_cells(pseudotime,identity_scores)
@@ -123,9 +125,6 @@ lineage_ancestor_tbl <- function(g) {
 #'		in each cluster. The higher the score the more likely the cell belong to the cluster.
 #' @return a ggplot graph
 #' @export
-#' @import ggplot2
-#' @importFrom ggplot2 ggplot aes geom_point facet_grid geom_abline xlab ylab labs ggtitle theme theme_bw scale_x_continuous
-#' @importFrom tidygraph as_tbl_graph as_tibble
 plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL) {
 	#pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]));g <- lineage_graph_build(pseudotime,identity_scores)
 	g <- as_tbl_graph(g)
@@ -197,6 +196,7 @@ plot_lineage_graph <- function(g) {
 #' Compute cells coordinates in a lineage graph from their identity_matrix
 #'
 #' @param g a graph
+#' @param pseudotime a numeric vector giving pseudotime of each cell
 #' @param identity_scores a numeric matrix of cell identity scores with number of
 #'		row matching length(pseudotime). Each row give identity scores of the cell
 #'		in each cluster.
