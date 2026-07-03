@@ -19,10 +19,14 @@ get_cells <- function(pseudotime,identity_scores) {
 	pseudotime <- as.numeric(pseudotime)
 	identity_scores <- as.matrix(identity_scores)
 	stopifnot("Dimensions of pseudotime and identity scores don't match" = nrow(identity_scores)==length(pseudotime))
+	if (is.null(colnames(identity_scores))) {
+		colnames(identity_scores) <- as.character(seq(ncol(identity_scores)))
+	}
+	identity <- max.col(identity_scores)
 	cells <- tibble(pseudotime,identity_scores) |>
 		mutate(
-			identity = max.col(identity_scores),
-			identity_label = colnames(identity_scores)[identity] %||% as.character(identity),
+			cell_id = seq_along(pseudotime),
+			identity_label = factor(colnames(identity_scores),colnames(identity_scores))[identity],
 			identity_score = identity_scores[cbind(seq_along(identity),identity)]
 		)
 	cells
@@ -45,13 +49,15 @@ lineage_graph_build <- function(pseudotime,identity_scores) {
 	#pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000)
 	cells <- get_cells(pseudotime,identity_scores)
 	nodes <- cells |>
-		group_by(identity,identity_label) |>
+		group_by(identity_label) |>
 		summarize(
+			min_pseudotime = min(pseudotime),
 			med_pseudotime = median(pseudotime),
+			max_pseudotime = max(pseudotime),
 			lm_coefs = list(lsfit(pseudotime,identity_scores) |> coef())
 		)
 
-	edges <- expand_grid(from=nodes$identity,to=nodes$identity) |>
+	edges <- expand_grid(from=nodes$identity_label,to=nodes$identity_label) |>
 		filter(from!=to)
 	g <- tbl_graph(nodes,edges) %>%
 		activate(edges) %>%
@@ -66,25 +72,40 @@ lineage_graph_build <- function(pseudotime,identity_scores) {
 	g
 }
 
-#' Prune a dense lineage graph to produce a lineage tree
+#' Prune a lineage graph to keep one parent per node
 #'
 #' Filter edges of the provided graph. First remove edges where median source node
 #' pseudotime is later than median target node pseudotime. Then rank edges according
 #' to lineage metrics and keep for each target node the best ranking parent.
 #'
 #' @param g a lineage graph typically obtained with `lineage_graph_build`
+#' @param n number of parent to keep for each node
 #' @return the filter input graph
 #' @export
-lineage_graph_prune <- function(g) {
+lineage_graph_prune <- function(g,n=1L) {
 	g <- g %>%
 		activate(edges) %>%
 		filter(target_cells.source_id.slope < target_cells.target_id.slope) %>%
-		arrange(desc(target_cells.branching.pseudotime)) %>%
 		group_by(to) %>%
-		slice_head(n=1) %>%
+		slice_max(order_by=target_cells.branching.pseudotime,n=n,with_ties = FALSE) %>%
+		ungroup() %>%
 		activate(nodes)
+	g
 }
 
+#' Compute ancestor table
+#'
+#' @param g a graph
+#' @return a sparse logical matrix where each row list all ancestors of a node
+#' @return a 2-column tibble of ancestors
+#' @export
+lineage_ancestor_tbl <- function(g) {
+	g %>%
+		mutate(ancestor_label = local_members(mode="in",mindist = 0,order = +Inf) %>% map(~.N()$identity_label[.])) %>%
+		as_tibble("nodes") %>%
+		select(node_label=identity_label,ancestor_label) %>%
+		unnest_longer(ancestor_label)
+}
 
 #' Show pseudotime/identity relationship
 #'
@@ -113,31 +134,42 @@ plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL
 			select(from_identity_label,to_identity_label) %>%
 			left_join(cells,by=c("to_identity_label"="identity_label"),relationship = "many-to-many") %>%
 			mutate(from_identity_score = identity_scores[cbind(seq_along(from_identity_label),match(from_identity_label,colnames(identity_scores)))]) %>%
-			select(-identity_scores,-identity)
+			mutate(
+				facet_x = str_c(to_identity_label,"\nTARGET cells"),
+				facet_y = str_c("vs ",from_identity_label,"\nSOURCE id")
+			) %>%
+			select(-identity_scores)
 	}
 
-	p <- ggplot(E) +
-		facet_grid(to_identity_label~from_identity_label)
+	p <- E %>%
+		mutate(
+			facet_x = str_c(to_identity_label,"\nTARGET cells"),
+			facet_y = str_c("vs ",from_identity_label,"\nSOURCE id")
+		) %>%
+		ggplot() +
+			facet_grid(facet_y ~ facet_x)
 		if (!is.null(cells)) {
 			p <- p +
 				geom_point(aes(x=pseudotime,y=from_identity_score,color="SOURCE identity (should decrease with time)"),data=cells,size=0.3) +
 				geom_point(aes(x=pseudotime,y=identity_score,color="TARGET identity (should increase with time)"),data=cells,size=0.3)
 		} else {
-			p <- p + scale_x_continuous(limits = g %>% activate(nodes) %>% pull(med_pseudotime) %>% range())
+			xlim <- range(
+				g %>% activate(nodes) %>% pull(min_pseudotime),
+				g %>% activate(nodes) %>% pull(max_pseudotime)
+			)
+			p <- p + scale_x_continuous(limits = xlim)
 		}
 		p <- p +
 			geom_abline(aes(slope=target_cells.source_id.slope,intercept = target_cells.source_id.intercept),linewidth=1,color="red") +
 			geom_abline(aes(slope=target_cells.target_id.slope,intercept = target_cells.target_id.intercept),linewidth=1,color="blue") +
-			xlab("pseudotime / SOURCE-identity") +
-			ylab("identity score / TARGET-identity") +
+			xlab("pseudotime") +
+			ylab("identity score") +
 			labs(colour="") +
-			ggtitle("Identity evolution of TARGET cells over time") +
+			ggtitle("Evolution of identity scores over pseudotime on TARGET cells") +
 			theme_bw() +
 			theme(legend.position="top")
-
 	p
 }
-
 
 #' Display lineage tree
 #'
@@ -147,28 +179,52 @@ plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL
 plot_lineage_graph <- function(g) {
 	g |>
 		ggraph() +
-			geom_edge_link(aes(filter=target_cells.source_id.slope >= target_cells.target_id.slope),arrow = grid::arrow(angle=10,type="closed"),color="grey") +
-			geom_edge_link(aes(filter=target_cells.source_id.slope < target_cells.target_id.slope),arrow = grid::arrow(angle=10,type="closed"),color="black") +
-			geom_node_label(aes(label=str_c(identity,"-",identity_label)))
+			geom_edge_link(arrow = grid::arrow(angle=10,type="closed")) +
+			geom_node_label(aes(label=str_c(seq_along(identity_label),"-",identity_label)))
 }
 
-
-#' Compute ancestor matrix
+#' Compute cells coordinates in a lineage graph from their identity_matrix
 #'
 #' @param g a graph
-#' @return a sparse logical matrix where each row list all ancestors of a node
+#' @param identity_scores a numeric matrix of cell identity scores with number of
+#'		row matching length(pseudotime). Each row give identity scores of the cell
+#'		in each cluster.
+#' @return a tibble
 #' @export
-ancestor_matrix <- function(g,mode="out") {
-	A <- g %>%
-		activate(nodes) %>%
-		select() %>%
-		mutate(
-			childs = local_members(mode = mode,mindist = 0, order = +Inf)
-		) %>%
-		as_tibble("nodes") %>%
-		mutate(node = seq_along(childs)) %>%
-		unnest_longer(childs)
-	Matrix::sparseMatrix(A$childs,A$node)
+lineage_coords <- function(g,pseudotime,identity_scores) {
+	#set.seed(123);pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]));g <- lineage_graph_build(pseudotime,identity_scores) %>% lineage_graph_prune()
+	ancestors <- lineage_ancestor_tbl(g)
+	cells <- get_cells(pseudotime,identity_scores)
+	lineages <- cells %>%
+		inner_join(ancestors,by = join_by(identity_label==ancestor_label),relationship = "many-to-many") %>%
+		dplyr::rename(lineage_label=node_label)
+	lineages
 }
+
+
+
+
+
+
+
+define_manual_lineage <- function() {
+	stop("not implemented yet")
+}
+
+define_known_relationships <- function() {
+	stop("not implemented yet")
+}
+
+test_pipeline <- function() {
+	set.seed(123);pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]));g <- lineage_graph_build(pseudotime,identity_scores)
+	plot_lineage_graph(g)
+	plot_lineage_incidence_matrix(g,pseudotime,identity_scores)
+	plot_lineage_incidence_matrix(g)
+	g <- lineage_graph_prune(g)
+	plot_lineage_graph(g)
+	lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + geom_jitter(aes(x=pseudotime,y=lineage_label,color=identity_label))
+	lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + ggridges::geom_density_ridges(aes(x=pseudotime,y=lineage_label,fill=identity_label),alpha=0.5)
+}
+
 
 
