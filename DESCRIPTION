@@ -21,11 +21,16 @@ RoxygenNote: 7.3.3
 Depends: R (>= 4.1.0)
 LinkingTo: Rcpp
 Imports:
+    tidyr,
+    magrittr,
+    stringr,
+    purrr,
+    ggplot2,
+    dplyr,
+    tibble,
     tidygraph,
     ggraph,
     Matrix,
     FNN,
-    dplyr,
-    tibble,
     Rcpp
 

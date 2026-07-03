@@ -123,6 +123,7 @@ lineage_ancestor_tbl <- function(g) {
 #'		in each cluster. The higher the score the more likely the cell belong to the cluster.
 #' @return a ggplot graph
 #' @export
+#' @import ggplot2
 #' @importFrom ggplot2 ggplot aes geom_point facet_grid geom_abline xlab ylab labs ggtitle theme theme_bw scale_x_continuous
 #' @importFrom tidygraph as_tbl_graph as_tibble
 plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL) {
