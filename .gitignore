@@ -10,3 +10,5 @@ src/*.dll
 *.Rcheck
 .DS_Store
 
+/doc/
+/Meta/

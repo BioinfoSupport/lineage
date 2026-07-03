@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-.Rhistory
-^lineage\.Rproj$
-TODO.txt
+^\.Rhistory$
+^TODO\.txt$
 ^LICENSE\.md$
+^doc$
+^Meta$

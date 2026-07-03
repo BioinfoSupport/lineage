@@ -1,7 +1,14 @@
 
-library(tidyverse)
-library(tidygraph)
-library(ggraph)
+
+#' @importFrom tibble tibble
+#' @importFrom dplyr mutate filter pull select left_join ungroup slice_max group_by
+#' @importFrom tidyr expand_grid
+#' @importFrom tidygraph tbl_graph activate .N select left_join ungroup slice_max group_by local_members
+#' @importFrom magrittr %>%
+#' @importFrom purrr map2_dbl
+#' @importFrom stringr str_c
+NULL
+
 
 
 #' Internal helper function to build a cells tibble from pseudotime and identity_score matrix.
@@ -48,19 +55,19 @@ get_cells <- function(pseudotime,identity_scores) {
 lineage_graph_build <- function(pseudotime,identity_scores) {
 	#pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000)
 	cells <- get_cells(pseudotime,identity_scores)
-	nodes <- cells |>
-		group_by(identity_label) |>
-		summarize(
+	nodes <- cells %>%
+		dplyr::group_by(identity_label) %>%
+		dplyr::summarise(
 			min_pseudotime = min(pseudotime),
 			med_pseudotime = median(pseudotime),
 			max_pseudotime = max(pseudotime),
 			lm_coefs = list(lsfit(pseudotime,identity_scores) |> coef())
 		)
 
-	edges <- expand_grid(from=nodes$identity_label,to=nodes$identity_label) |>
-		filter(from!=to)
-	g <- tbl_graph(nodes,edges) %>%
-		activate(edges) %>%
+	edges <- tidyr::expand_grid(from=nodes$identity_label,to=nodes$identity_label) %>%
+		dplyr::filter(from!=to)
+	g <- tidygraph::tbl_graph(nodes,edges) %>%
+		tidygraph::activate(edges) %>%
 		mutate(
 			target_cells.source_id.slope     = map2_dbl(.N()$lm_coefs[to],from,~.x[2L,.y]),
 			target_cells.source_id.intercept = map2_dbl(.N()$lm_coefs[to],from,~.x[1L,.y]),
@@ -116,6 +123,8 @@ lineage_ancestor_tbl <- function(g) {
 #'		in each cluster. The higher the score the more likely the cell belong to the cluster.
 #' @return a ggplot graph
 #' @export
+#' @importFrom ggplot2 ggplot aes geom_point facet_grid geom_abline xlab ylab labs ggtitle theme theme_bw scale_x_continuous
+#' @importFrom tidygraph as_tbl_graph as_tibble
 plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL) {
 	#pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]));g <- lineage_graph_build(pseudotime,identity_scores)
 	g <- as_tbl_graph(g)
@@ -176,6 +185,7 @@ plot_lineage_incidence_matrix <- function(g,pseudotime=NULL,identity_scores=NULL
 #' @param g a lineage graph
 #' @return a gggraph plot
 #' @export
+#' @importFrom ggraph ggraph geom_edge_link geom_node_label
 plot_lineage_graph <- function(g) {
 	g |>
 		ggraph() +
@@ -201,30 +211,6 @@ lineage_coords <- function(g,pseudotime,identity_scores) {
 	lineages
 }
 
-
-
-
-
-
-
-define_manual_lineage <- function() {
-	stop("not implemented yet")
-}
-
-define_known_relationships <- function() {
-	stop("not implemented yet")
-}
-
-test_pipeline <- function() {
-	set.seed(123);pseudotime <- runif(1000);identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]));g <- lineage_graph_build(pseudotime,identity_scores)
-	plot_lineage_graph(g)
-	plot_lineage_incidence_matrix(g,pseudotime,identity_scores)
-	plot_lineage_incidence_matrix(g)
-	g <- lineage_graph_prune(g)
-	plot_lineage_graph(g)
-	lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + geom_jitter(aes(x=pseudotime,y=lineage_label,color=identity_label))
-	lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + ggridges::geom_density_ridges(aes(x=pseudotime,y=lineage_label,fill=identity_label),alpha=0.5)
-}
 
 
 

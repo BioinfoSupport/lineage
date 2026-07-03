@@ -1,4 +1,7 @@
 
+# Code parking
+
+
 library(tidyverse)
 library(tidygraph)
 library(ggraph)
@@ -21,11 +24,11 @@ node_rank_dfs_leaf <- function(g) {
 
 	g <- g %>%
 		left_join(by="identity",
-			select(g,identity,dfs_rk,is_sink) %>%
-				as_tibble("nodes") %>%
-				arrange(dfs_rk) %>%
-				mutate(dfs_visited_leaf = cumsum(c(FALSE,is_sink)[-length(identity)])) %>%
-				select(identity,dfs_visited_leaf)
+							select(g,identity,dfs_rk,is_sink) %>%
+								as_tibble("nodes") %>%
+								arrange(dfs_rk) %>%
+								mutate(dfs_visited_leaf = cumsum(c(FALSE,is_sink)[-length(identity)])) %>%
+								select(identity,dfs_visited_leaf)
 		)
 
 	ggraph(g,layout="manual",x=med_pseudotime,y=dfs_visited_leaf) +
@@ -38,29 +41,6 @@ node_rank_dfs_leaf <- function(g) {
 		geom_node_label(aes(label=identity_label))
 }
 
-#'
-lineage_ancestor_matrix <- function(tree,pseudotime,identity_score_matrix) {
-}
-
-
-#'
-lineage_tree_cells_coords <- function(tree,pseudotime,identity_score_matrix) {
-}
-
-
-#'
-lineage_tree_cells_coords <- function(tree,pseudotime,identity_score_matrix) {
-}
-
-
-
-# Plot the usual lineage
-pseudotime_ridge_density <- function(pseudotime,identity) {
-}
-
-# ORM to infer compute pseudotime model
-
-# scml to infer identity scores
 
 
 predict_pseudotime <- function(counts,model) {

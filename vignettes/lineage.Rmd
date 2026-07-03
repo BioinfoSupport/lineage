@@ -1,25 +1,31 @@
-# lineage
+---
+title: "lineage"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{lineage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-`lineage` is an R package to help infer lineage graph from single cell transcriptomic 
-data where a pseudotime and a celltype score matrix is available.
-
-
-# Installation
-
-``` r
-devtools::install_github("BioinfoSupport/lineage")
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
 ```
 
 
-# Usage
-
-``` r
+```{r}
 library(lineage)
+library(tidyverse)
 
 set.seed(123)
 pseudotime <- runif(1000)
 identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]))
+```
 
+
+```{r}
 g <- lineage_graph_build(pseudotime,identity_scores)
 plot_lineage_graph(g)
 plot_lineage_incidence_matrix(g,pseudotime,identity_scores)
@@ -28,6 +34,5 @@ g <- lineage_graph_prune(g)
 plot_lineage_graph(g)
 lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + geom_jitter(aes(x=pseudotime,y=lineage_label,color=identity_label))
 lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + ggridges::geom_density_ridges(aes(x=pseudotime,y=lineage_label,fill=identity_label),alpha=0.5)
-	
 ```
 

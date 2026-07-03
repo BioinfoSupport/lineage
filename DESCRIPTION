@@ -11,14 +11,21 @@ Authors@R: c(
   )
 Description: Infer lineage tree from single cell transcriptomic and provide
     multiple tools to work with lineage trees.
+Suggests:
+    knitr,
+    rmarkdown    
+VignetteBuilder: knitr
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.3.3
+Depends: R (>= 4.1.0)
 LinkingTo: Rcpp
 Imports:
-    tidyverse,
     tidygraph,
     ggraph,
+    Matrix,
+    FNN,
+    dplyr,
+    tibble,
     Rcpp
 

@@ -1,0 +1,10 @@
+
+
+# `lineage` package TODO list
+
+- Show how to build an ORM with bmrm to modelise and predict cells pseudotime
+- Show how to build an DNN with scml to modelise and predict identity score matrix
+- Implement a graph layout to display lineages
+- Implement utility function to define the lineage manually, or show how to do
+  it...
+
