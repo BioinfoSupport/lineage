@@ -9,6 +9,5 @@ src/*.dll
 *.tgz
 *.Rcheck
 .DS_Store
-
 /doc/
 /Meta/
