@@ -7,7 +7,7 @@ data where a pseudotime and a celltype score matrix is available.
 # Installation
 
 ``` r
-devtools::install_github("BioinfoSupport/lineage")
+devtools::install_github("BioinfoSupport/lineage/lineage")
 ```
 
 
@@ -16,18 +16,15 @@ devtools::install_github("BioinfoSupport/lineage")
 ``` r
 library(lineage)
 
+# Generate a random pseudotime and identity score matrix
 set.seed(123)
 pseudotime <- runif(1000)
 identity_scores <- matrix(runif(10000),1000,dimnames=list(NULL,LETTERS[1:10]))
 
-g <- lineage_graph_build(pseudotime,identity_scores)
+# Find lineage
+g <- lineage_graph_build(pseudotime,identity_scores) |>
+  lineage_graph_prune()
 plot_lineage_graph(g)
-plot_lineage_incidence_matrix(g,pseudotime,identity_scores)
-plot_lineage_incidence_matrix(g)
-g <- lineage_graph_prune(g)
-plot_lineage_graph(g)
-lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + geom_jitter(aes(x=pseudotime,y=lineage_label,color=identity_label))
-lineage_coords(g,pseudotime,identity_scores) %>% ggplot() + ggridges::geom_density_ridges(aes(x=pseudotime,y=lineage_label,fill=identity_label),alpha=0.5)
-	
 ```
+
 
